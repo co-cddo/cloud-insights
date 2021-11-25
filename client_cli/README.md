@@ -4,15 +4,10 @@ Grant access to AWS billing controls and account and organization information vi
 
 ``` sh
 
-aws iam create-policy --policy-name central-aws-overview-policy \
-  --policy-document file://../client_policy.json \
-  --tags "Reference=https://github.com/OllieJC/central-aws-overview"
+aws iam create-policy --policy-name cddo-cloud-insights-policy --policy-document file://../client_terraform/client_policy.json --tags 'Key="Reference",Value="https://github.com/co-cddo/cloud-insights"' 'Key="Service",Value="Cabinet Office CDDO Cloud Insights Access"'
 
-aws iam create-role --role-name central-aws-overview-role \
-  --assume-role-policy-document file://../client_trust_policy.json \
-  --tags "Reference=https://github.com/OllieJC/central-aws-overview"
+aws iam create-role --role-name cddo-cloud-insights-role --assume-role-policy-document file://../client_terraform/client_trust_policy.json --tags 'Key="Reference",Value="https://github.com/co-cddo/cloud-insights"' 'Key="Service",Value="Cabinet Office CDDO Cloud Insights Access"'
 
-attach-role-policy --role-name central-aws-overview-role \
-  --policy-arn arn:aws:iam::ACCOUNT_ID:policy/central-aws-overview-policy
+aws iam attach-role-policy --role-name cddo-cloud-insights-role --policy-arn arn:aws:iam::ACCOUNT_ID:policy/cddo-cloud-insights-policy
 
 ```

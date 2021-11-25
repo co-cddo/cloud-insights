@@ -1,6 +1,6 @@
 variable "default_tags" {
   default     = {
-    "Service": "Cabinet Office CDDO Cloud Insights Access",
+    "Service": "CDDO Cloud Insights",
     "Reference": "https://github.com/co-cddo/cloud-insights"
   }
   description = "Default resource tags"

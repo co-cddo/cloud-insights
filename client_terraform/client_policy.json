@@ -2,18 +2,18 @@
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "organization-view-access",
+            "Sid": "OrganizationViewAccess",
             "Effect": "Allow",
             "Action": [
                 "organizations:ListAccounts",
                 "organizations:ListTagsForResource",
                 "organizations:DescribeOrganization",
-                "organizations:DescribeAccount",
+                "organizations:DescribeAccount"
             ],
             "Resource": "*"
         },
         {
-            "Sid": "cost-and-billing-access",
+            "Sid": "CostAndBillingAccess",
             "Effect": "Allow",
             "Action": [
                 "aws-portal:ViewPaymentMethods",

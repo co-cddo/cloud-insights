@@ -2,7 +2,7 @@
     "Version": "2012-10-17",
     "Statement": {
         "Effect": "Allow",
-        "Principal": { "AWS": "arn:aws:iam::TBD:role/ROLE-OF-LAMBDA" },
+        "Principal": { "AWS": "arn:aws:iam::TBD:role/cddo-cloud-insights-lambda-role-prod" },
         "Action": "sts:AssumeRole"
     }
 }
