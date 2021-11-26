@@ -1,5 +1,5 @@
 resource "aws_iam_role" "cloud-insights-lambda-role" {
-  name = join("", ["cloud-insights-lambda-role", (var.role_suffix != "" ? var.role_suffix : "")])
+  name = join("", ["co-cddo-cloud-insights-lambda-role", (var.role_suffix != "" ? var.role_suffix : "")])
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"

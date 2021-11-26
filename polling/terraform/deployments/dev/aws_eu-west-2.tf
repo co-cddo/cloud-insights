@@ -3,10 +3,12 @@ provider "aws" {
 }
 
 module "co-cddo-cloud-insights" {
-  source          = "../../code"
-  role_suffix     = "-dev"
-  policy_suffix   = "-dev"
-  additional_tags = {
+  source           = "../../code"
+  role_suffix      = "-dev"
+  policy_suffix    = "-dev"
+  lambda_suffix    = "-dev"
+  s3_bucket_suffix = "-dev"
+  additional_tags  = {
     "Environment": "development"
   }
 }
