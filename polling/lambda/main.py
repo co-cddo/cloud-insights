@@ -28,8 +28,9 @@ def lambda_handler(event, context):
 
         credentials = {}
         try:
-            credentials = assumeRole(
-                pollingAccountId, account["accountId"], account["roleSuffix"]
+            roleSuffix = account["roleSuffix"] if "roleSuffix" in account else ""
+            credentials = assume_role(
+                pollingAccountId, account["accountId"], roleSuffix
             )
         except Exception as e:
             accountResult["assumeRoleFailureMessage"] = str(e)
@@ -103,7 +104,7 @@ def save_file_to_s3(contents: str, key_type: str, pollingAccountId: str):
     )
 
 
-def assumeRole(pollingAccountId: str, accountId: str, roleSuffix: str = "") -> dict:
+def assume_role(pollingAccountId: str, accountId: str, roleSuffix: str = "") -> dict:
     client = boto3.client("sts")
 
     roleArn = f"arn:aws:iam::{accountId}:role/co-cddo-cloud-insights-role{roleSuffix}"
@@ -112,8 +113,6 @@ def assumeRole(pollingAccountId: str, accountId: str, roleSuffix: str = "") -> d
     response = client.assume_role(
         RoleArn=roleArn, RoleSessionName=roleSessionName, DurationSeconds=900
     )
-
-    print(json.dumps(response, default=str))
 
     res = {}
     if "Credentials" in response:
