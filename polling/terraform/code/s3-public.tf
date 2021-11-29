@@ -26,9 +26,10 @@ resource "aws_s3_bucket" "public-bucket" {
     Statement = [
       {
         Sid       = "PublicRead",
-        Action    = ["s3:GetObject", "s3:GetObjectVersion"]
+        Action    = ["s3:GetObject", "s3:ListBucket", "s3:GetObjectVersion"]
         Resource  = [
-          "arn:aws:s3:::${local.bucket}/*"
+          "arn:aws:s3:::${local.bucket}/*",
+          "arn:aws:s3:::${local.bucket}"
         ]
         Effect    = "Allow"
         Principal = "*"
