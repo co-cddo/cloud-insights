@@ -6,6 +6,6 @@ This is a tool to gather and interpret cost and usage data from cloud environmen
 
 ## How it works?
 
-For AWS, you'll have to add a [policy](client_policy.json) and role to the main AWS billing account. The role allows a central role and Lambda to assume it and query organisation, cost and usage data.
+For AWS, you'll have to add a [policy](client_terraform/client_policy.json) and role to the main AWS billing account. The role allows a central role and Lambda to assume it and query organisation, cost and usage data.
 
 You'll need to let us know the account number after you've configured the role and policy so we can configure the polling tool to scan your account.
