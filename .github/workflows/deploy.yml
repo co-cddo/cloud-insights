@@ -1,0 +1,41 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Build and deploy
+
+# Controls when the workflow will run
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      # Runs a single command using the runners shell
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Test the AWS CLI
+        run: |
+          aws sts get-caller-identity
+          
+      - uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.0.11
+      
+      - name: Validate and plan terraform
+        run: |
+          touch ./polling/terraform/code/lambda.zip
+          cd ./polling/terraform/deployments/prod
+          terraform init
+          terraform validate
+          terraform plan
