@@ -2,7 +2,7 @@
 
 Grant access to AWS billing controls and account and organization information via this CloudFormation module.
 
-Module also available from S3: ...
+Module will be available from S3.
 
 ### yaml
 
@@ -10,7 +10,7 @@ Module also available from S3: ...
 Transform:
   Name: 'AWS::Include'
   Parameters:
-    Location: 's3://TBD/client_cloudformation/client_cloudformation_0_1.yaml'
+    Location: 's3://co-cddo-cloud-insights-public-prod/client_cloudformation/client_cloudformation_0_1.yaml'
 ```
 
 ### json
@@ -20,7 +20,7 @@ Transform:
    "Transform" : {
        "Name" : "AWS::Include",
        "Parameters" : {
-           "Location" : "s3://TBD/client_cloudformation/client_cloudformation_0_1.yaml"
+           "Location" : "s3://co-cddo-cloud-insights-public-prod/client_cloudformation/client_cloudformation_0_1.json"
         }
     }
 }
