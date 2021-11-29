@@ -10,7 +10,7 @@ resource "aws_iam_role" "cloud-insights-lambda-role" {
         Principal = {
           Service = "lambda.amazonaws.com"
         }
-      },
+      }
     ]
   })
 

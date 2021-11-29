@@ -1,9 +1,16 @@
+locals {
+  bucket = join("", [
+      "co-cddo-cloud-insights-public",
+      (var.s3_bucket_suffix != "" ? var.s3_bucket_suffix : "")
+    ]
+  )
+}
+
 resource "aws_s3_bucket" "public-bucket" {
-  bucket = join("", ["co-cddo-cloud-insights-public", (var.s3_bucket_suffix != "" ? var.s3_bucket_suffix : "")])
+  bucket = local.bucket
 
   versioning {
     enabled    = true
-    mfa_delete = true
   }
 
   cors_rule {
@@ -20,19 +27,17 @@ resource "aws_s3_bucket" "public-bucket" {
       {
         Sid       = "PublicRead",
         Action    = ["s3:GetObject", "s3:GetObjectVersion"]
+        Resource  = [
+          "arn:aws:s3:::${local.bucket}/*"
+        ]
         Effect    = "Allow"
         Principal = "*"
-      },
+      }
     ]
   })
 
   tags = merge(
-    {
-      "Name" : join("", [
-        "co-cddo-cloud-insights-public",
-        (var.s3_bucket_suffix != "" ? var.s3_bucket_suffix : "")
-      ])
-    },
+    { "Name" : local.bucket },
     var.default_tags,
     var.additional_tags
   )

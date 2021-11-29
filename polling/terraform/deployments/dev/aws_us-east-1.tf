@@ -1,5 +1,13 @@
 provider "aws" {
-  region = "eu-west-2"
+  region = "us-east-1"
+}
+
+terraform {
+  backend "s3" {
+    bucket = "cddo-cloud-insights-tfstate"
+    key    = "app-dev.tfstate"
+    region = "eu-west-2"
+  }
 }
 
 module "co-cddo-cloud-insights" {

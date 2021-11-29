@@ -2,6 +2,7 @@
 **/.terraform/*
 **/.terraform
 **/.terraform*
+**/personal
 
 # .tfstate files
 *.tfstate
@@ -9,6 +10,7 @@
 
 *.zip
 **/.target
+**/__pycache__
 
 # Crash log files
 crash.log

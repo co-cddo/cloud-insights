@@ -7,7 +7,7 @@ if (Test-Path -Path $BUILD_DIR) {
 }
 
 New-Item -ItemType Directory -Path $BUILD_DIR
-& $PYTHON310 -m pip install -r requirements.txt -t $BUILD_DIR
+# python -m pip install -r requirements.txt -t $BUILD_DIR
 
 Copy-Item -Path *.py -Destination $BUILD_DIR
 

@@ -11,6 +11,27 @@ resource "aws_iam_policy" "cloud-insights-lambda-policy" {
         Effect   = "Allow"
         Resource = "arn:aws:iam::*:role/co-cddo-cloud-insights-role*"
       },
+      {
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Effect   = "Allow"
+        Resource = "arn:aws:logs:*:*:*"
+      },
+      {
+        Action = [
+          "s3:Get*",
+          "s3:Put*",
+          "s3:List*"
+        ]
+        Effect   = "Allow"
+        Resource = [
+          "arn:aws:s3:::${local.bucket_private}/",
+          "arn:aws:s3:::${local.bucket_private}/*",
+        ]
+      }
     ]
   })
 
