@@ -79,7 +79,7 @@ def lambda_handler(event, context):
 
     print(json.dumps(accountResults, default=str))
 
-    for x in ["ORGANISATION_KEYS", "ACCOUNT_DETAILS_KEYS", "ACCOUNT_COSTUSAGE_KEYS"]:
+    for x in ["ORGANISATION", "ACCOUNT_DETAILS", "ACCOUNT_COSTUSAGE"]:
         save_file_to_s3(object_to_lines(accountResults, x), x, pollingAccountId)
 
     return {"statusCode": 200, "body": "OK"}
