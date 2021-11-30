@@ -22,6 +22,8 @@ jobs:
         environment: [build, live]
     environment:
       name: ${{ matrix.environment }}
+    
+    if: (github.ref == 'refs/heads/main' && matrix.environment == 'live') || (matrix.environment == 'build')
     steps:
       - name: GitHub Reference
         run: |
@@ -30,7 +32,7 @@ jobs:
       - name: Wait for build if this is live
         if: github.ref == 'refs/heads/main' && matrix.environment == 'live'
         run: |
-          sleep 45s
+          sleep 30s
           
       - uses: actions/checkout@v2
 
