@@ -25,7 +25,6 @@ jobs:
     environment:
       name: ${{ matrix.environment }}
 
-    if: (github.ref == 'refs/heads/main' && matrix.environment == 'live') || (matrix.environment == 'build')
     steps:
       - name: GitHub Reference
         run: |
@@ -37,8 +36,10 @@ jobs:
           sleep 30s
 
       - uses: actions/checkout@v2
+        if: (github.ref == 'refs/heads/main' && matrix.environment == 'live') || (matrix.environment == 'build')
 
       - name: Install PowerShell
+        if: (github.ref == 'refs/heads/main' && matrix.environment == 'live') || (matrix.environment == 'build')
         run: |
           if [ -z "$(command -v pwsh)" ]; then
             export $(cat /etc/os-release | grep VERSION_ID | tr -d '"')
@@ -51,10 +52,12 @@ jobs:
           fi
 
       - uses: hashicorp/setup-terraform@v1
+        if: (github.ref == 'refs/heads/main' && matrix.environment == 'live') || (matrix.environment == 'build')
         with:
           terraform_version: 1.0.11
 
       - name: Build Lambda
+        if: (github.ref == 'refs/heads/main' && matrix.environment == 'live') || (matrix.environment == 'build')
         run: |
           CWD=$(pwd)
           cd ./polling/lambda/
@@ -62,6 +65,7 @@ jobs:
           cd $CWD
 
       - name: Terraform init and validate
+        if: (github.ref == 'refs/heads/main' && matrix.environment == 'live') || (matrix.environment == 'build')
         run: |
           CWD=$(pwd)
           cd ./polling/terraform/deployments/prod/
