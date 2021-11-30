@@ -10,8 +10,21 @@ terraform {
   }
 }
 
-module "co-cddo-cloud-insights" {
+locals {
+  source_files = sort(concat(
+    tolist(fileset("", "../../../lambda/*.py")),
+    tolist(fileset("", "../../../lambda/*.txt"))
+  ))
+  source_code_hash = base64sha256(
+    join("", [
+      for f in local.source_files: filesha256(f)
+    ])
+  )
+}
+
+module "cddo-cloud-insights" {
   source           = "../../code"
+  source_code_hash = local.source_code_hash
   role_suffix      = "-dev"
   policy_suffix    = "-dev"
   lambda_suffix    = "-dev"

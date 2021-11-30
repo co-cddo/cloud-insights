@@ -37,21 +37,23 @@ def lambda_handler(event, context):
 
         if "AccountId" in credentials:
 
-            orgClient = return_client("organizations", credentials)
+            org_client = return_client("organizations", credentials)
             current_account = getCurrentAccountDetails(
-                orgClient, credentials["AccountId"]
+                org_client, credentials["AccountId"]
             )
-            account_summary = get_iam_summary(credentials)
+            org = getOrganisation(org_client)
+            orgs = get_child_organisations(org_client)
 
-            org = getOrganisation(orgClient)
-            orgs = get_child_organisations(orgClient)
+            iam_client = return_client("iam", credentials)
+            account_summary = get_iam_summary(iam_client)
+            password_policy = get_iam_password_policy(iam_client)
 
-            ceClient = return_client("ce", credentials)
-            cday = get_costs_and_usage(ceClient)
-            cmonth = get_costs_and_usage(ceClient, "current-month")
-            lmonth = get_costs_and_usage(ceClient, "last-month")
-            lyear = get_costs_and_usage(ceClient, "last-year")
-            rsizing = get_rightsizing_recommendations(ceClient)
+            ce_client = return_client("ce", credentials)
+            cday = get_costs_and_usage(ce_client)
+            cmonth = get_costs_and_usage(ce_client, "current-month")
+            lmonth = get_costs_and_usage(ce_client, "last-month")
+            lyear = get_costs_and_usage(ce_client, "last-year")
+            rsizing = get_rightsizing_recommendations(ce_client)
 
             accountResult.update(
                 {
@@ -64,6 +66,7 @@ def lambda_handler(event, context):
                     if "reason" in orgs
                     else orgs["accounts"],
                     "accountSummary": account_summary,
+                    "passwordPolicy": password_policy,
                     "costsAndUsage-day": cday,
                     "costsAndUsage-current-month": cmonth,
                     "costsAndUsage-last-month": lmonth,
@@ -147,8 +150,7 @@ def getCurrentAccountDetails(client, accountId: str) -> dict:
     return res
 
 
-def get_iam_summary(credentials: dict) -> dict:
-    client = return_client("iam", credentials)
+def get_iam_summary(client) -> dict:
     res = {}
     try:
         res = client.get_account_summary()
@@ -157,6 +159,20 @@ def get_iam_summary(credentials: dict) -> dict:
     except Exception as e:
         if DEBUG:
             print(f"get_iam_summary: {e}")
+    return res
+
+
+def get_iam_password_policy(client) -> dict:
+    res = {}
+    try:
+        res = client.get_account_password_policy()
+        if "PasswordPolicy" in res:
+            return res["PasswordPolicy"]
+    except client.exceptions.NoSuchEntityException as e:
+        res = {"reason": "not-set"}
+    except Exception as e:
+        if DEBUG:
+            print(f"get_iam_password_policy: {e}")
     return res
 
 
@@ -254,7 +270,8 @@ def get_costs_and_usage(client, dateRangeType: str = "day"):
     if "day" in dateRangeType:
         granularity = "DAILY"
 
-    res = client.get_cost_and_usage(
+    res = {}
+    response = client.get_cost_and_usage(
         TimePeriod={"Start": startDate, "End": endDate},
         Granularity=granularity,
         GroupBy=[
@@ -262,42 +279,59 @@ def get_costs_and_usage(client, dateRangeType: str = "day"):
         ],
         Metrics=["BlendedCost"],
     )
-    if "ResultsByTime" in res and "DimensionValueAttributes" in res:
-        accounts = {}
+    if "ResultsByTime" in response and "DimensionValueAttributes" in response:
+        res["ResultsByTime"] = response["ResultsByTime"]
+        res["DimensionValueAttributes"] = response["DimensionValueAttributes"]
 
-        if "ResultsByTime" in res:
-            cau_rbt = res["ResultsByTime"]
-            total_periods = len(cau_rbt)
-            for cr in range(total_periods):
-                for rbt in cau_rbt[cr]["Groups"]:
+        while "NextPageToken" in response and response["NextPageToken"]:
+            while_response = client.get_cost_and_usage(
+                TimePeriod={"Start": startDate, "End": endDate},
+                Granularity=granularity,
+                GroupBy=[
+                    {"Type": "DIMENSION", "Key": "LINKED_ACCOUNT"},
+                ],
+                Metrics=["BlendedCost"],
+            )
+            if (
+                "ResultsByTime" in while_response
+                and "DimensionValueAttributes" in while_response
+            ):
+                res["ResultsByTime"].extend(while_response["ResultsByTime"])
+                res["DimensionValueAttributes"].extend(
+                    while_response["DimensionValueAttributes"]
+                )
 
-                    cauAId = rbt["Keys"][0]
-                    if cauAId not in accounts:
-                        accounts[cauAId] = {}
+    accounts = {}
 
-                    ak = f"costsAndUsage-BlendedCost-{dateRangeType}"
-                    if f"{ak}-amount" not in accounts[cauAId]:
-                        amount = float(rbt["Metrics"]["BlendedCost"]["Amount"])
-                        accounts[cauAId][f"{ak}-amount"] = amount
-                        accounts[cauAId][f"{ak}-unit"] = rbt["Metrics"]["BlendedCost"][
-                            "Unit"
-                        ]
-                        accounts[cauAId][f"{ak}-range"] = cau_rbt[cr]["TimePeriod"][
-                            "Start"
-                        ]
-                    else:
-                        amount = float(rbt["Metrics"]["BlendedCost"]["Amount"])
-                        accounts[cauAId][f"{ak}-amount"] += amount
+    if "ResultsByTime" in res:
+        cau_rbt = res["ResultsByTime"]
+        total_periods = len(cau_rbt)
+        for cr in range(total_periods):
+            for rbt in cau_rbt[cr]["Groups"]:
 
-                    if cr == (total_periods - 1):
-                        endDate = cau_rbt[cr]["TimePeriod"]["End"]
-                        accounts[cauAId][f"{ak}-range"] += f"_{endDate}"
+                cauAId = rbt["Keys"][0]
+                if cauAId not in accounts:
+                    accounts[cauAId] = {}
 
-            for dva in res["DimensionValueAttributes"]:
-                if dva["Value"] in accounts:
-                    accounts[dva["Value"]]["accountName"] = dva["Attributes"][
-                        "description"
+                ak = f"costsAndUsage-BlendedCost-{dateRangeType}"
+                if f"{ak}-amount" not in accounts[cauAId]:
+                    amount = float(rbt["Metrics"]["BlendedCost"]["Amount"])
+                    accounts[cauAId][f"{ak}-amount"] = amount
+                    accounts[cauAId][f"{ak}-unit"] = rbt["Metrics"]["BlendedCost"][
+                        "Unit"
                     ]
+                    accounts[cauAId][f"{ak}-range"] = cau_rbt[cr]["TimePeriod"]["Start"]
+                else:
+                    amount = float(rbt["Metrics"]["BlendedCost"]["Amount"])
+                    accounts[cauAId][f"{ak}-amount"] += amount
 
-        return accounts
-    return {}
+                if cr == (total_periods - 1):
+                    endDate = cau_rbt[cr]["TimePeriod"]["End"]
+                    accounts[cauAId][f"{ak}-range"] += f"_{endDate}"
+
+    if "DimensionValueAttributes" in res:
+        for dva in res["DimensionValueAttributes"]:
+            if dva["Value"] in accounts:
+                accounts[dva["Value"]]["accountName"] = dva["Attributes"]["description"]
+
+    return accounts

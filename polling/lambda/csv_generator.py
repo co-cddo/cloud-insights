@@ -10,6 +10,7 @@ KEYS = {
         "organizationAccountCount",
         "organizationAccountMFAEnabled",
         "organizationAccountAccessKeysPresent",
+        "organizationAccountPasswordPolicy",
     ],
     "ACCOUNT_DETAILS_KEYS": [
         "accountId",
@@ -20,6 +21,9 @@ KEYS = {
         "accountJoinedTimestamp",
         "accountEmail",
         "accountTags",
+        "accountMFAEnabled",
+        "accountAccessKeysPresent",
+        "passwordPolicy",
     ],
     "ACCOUNT_COSTUSAGE_KEYS": [
         "accountId",
@@ -47,7 +51,7 @@ def initial_line_dict(accountId: str, key_type: str) -> dict:
     return line_res
 
 
-def normalise_tags(tags):
+def simply_json_to_string(tags):
     return ";".join([f"{x}=" + str(y).replace(";", "%3B") for x, y in tags.items()])
 
 
@@ -79,6 +83,19 @@ def object_to_lines(input_object: list, key_type: str) -> list:
         if thisAccountId not in accountDetails:
             accountDetails[thisAccountId] = {"accountIsOrganization": "no"}
 
+            if "accountSummary" in i and i["accountSummary"]:
+                accountDetails[thisAccountId]["accountMFAEnabled"] = i[
+                    "accountSummary"
+                ]["AccountMFAEnabled"]
+                accountDetails[thisAccountId]["accountAccessKeysPresent"] = i[
+                    "accountSummary"
+                ]["AccountAccessKeysPresent"]
+
+            if "passwordPolicy" in i and i["passwordPolicy"]:
+                accountDetails[thisAccountId]["passwordPolicy"] = simply_json_to_string(
+                    i["passwordPolicy"]
+                )
+
         if "organization" in i and "MasterAccountId" in i["organization"]:
             o = i["organization"]["MasterAccountId"]
 
@@ -92,6 +109,21 @@ def object_to_lines(input_object: list, key_type: str) -> list:
                 orgDetails[o] = {
                     "organizationAccountEmail": i["organization"]["MasterAccountEmail"]
                 }
+
+                if thisAccountId == o:
+                    if "accountSummary" in i and i["accountSummary"]:
+                        orgDetails[o]["organizationAccountMFAEnabled"] = i[
+                            "accountSummary"
+                        ]["AccountMFAEnabled"]
+                        orgDetails[o]["organizationAccountAccessKeysPresent"] = i[
+                            "accountSummary"
+                        ]["AccountAccessKeysPresent"]
+
+                    if "passwordPolicy" in i and i["passwordPolicy"]:
+                        orgDetails[o][
+                            "organizationAccountPasswordPolicy"
+                        ] = simply_json_to_string(i["passwordPolicy"])
+
                 if type(i["childAccounts"]) == list:
                     orgDetails[o]["organizationAccountCount"] = len(i["childAccounts"])
 
@@ -110,19 +142,11 @@ def object_to_lines(input_object: list, key_type: str) -> list:
                                 "accountStatus": ca["Status"],
                                 "accountJoinedTimestamp": ca["JoinedTimestamp"],
                                 "accountEmail": ca["Email"],
-                                "accountTags": normalise_tags(ca["Tags"]),
+                                "accountTags": simply_json_to_string(ca["Tags"]),
                                 "accountIsOrganization": "yes" if caId == o else "no",
                                 "organizationAccountId": o,
                             }
                         )
-
-                if "accountSummary" in i and i["accountSummary"]:
-                    orgDetails[o]["organizationAccountMFAEnabled"] = i[
-                        "accountSummary"
-                    ]["AccountMFAEnabled"]
-                    orgDetails[o]["organizationAccountAccessKeysPresent"] = i[
-                        "accountSummary"
-                    ]["AccountAccessKeysPresent"]
 
         for x in ["current-month", "day", "last-month", "last-year"]:
             cau = f"costsAndUsage-{x}"

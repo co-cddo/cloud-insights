@@ -32,3 +32,8 @@ variable "lambda_suffix" {
   default = ""
   type    = string
 }
+
+variable "source_code_hash" {
+  default = ""
+  type    = string
+}

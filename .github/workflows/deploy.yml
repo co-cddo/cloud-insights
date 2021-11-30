@@ -17,6 +17,14 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
+      - name: Install PowerShell
+        run: |
+          export $(cat /etc/os-release | grep VERSION_ID | tr -d '"')
+          wget -q "https://packages.microsoft.com/config/ubuntu/${VERSION_ID}/packages-microsoft-prod.deb"
+          dpkg -i packages-microsoft-prod.deb
+          apt-get update
+          apt-get install -y powershell
+
       # Runs a single command using the runners shell
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -28,15 +36,18 @@ jobs:
       - name: Test the AWS CLI
         run: |
           aws sts get-caller-identity
-          
+
       - uses: hashicorp/setup-terraform@v1
         with:
           terraform_version: 1.0.11
-      
+
       - name: Validate and plan terraform
         run: |
-          touch ./polling/terraform/code/lambda.zip
-          cd ./polling/terraform/deployments/prod
+          CWD=$(pwd)
+          cd ./polling/lambda/
+          pwsh build.ps1
+
+          cd ./polling/terraform/deployments/prod/
           terraform init
           terraform validate
-          terraform plan
+          terraform apply -auto-approve
