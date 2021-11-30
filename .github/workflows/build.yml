@@ -1,0 +1,47 @@
+name: Build
+
+on:
+  pull_request:
+    branches:
+      - '*'
+    paths:
+      - 'polling/**'
+
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install PowerShell
+        run: |
+          if [ -z "$(command -v pwsh)" ]; then
+            export $(cat /etc/os-release | grep VERSION_ID | tr -d '"')
+            wget -q "https://packages.microsoft.com/config/ubuntu/${VERSION_ID}/packages-microsoft-prod.deb"
+            sudo dpkg -i packages-microsoft-prod.deb
+            sudo apt-get update
+            sudo apt-get install -y powershell
+          else
+            echo "pwsh already installed"
+          fi
+
+      - uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.0.11
+
+      - name: Build Lambda
+        run: |
+          CWD=$(pwd)
+          cd ./polling/lambda/
+          pwsh build.ps1
+          cd $CWD
+
+      - name: Terraform init and validate
+        run: |
+          CWD=$(pwd)
+          cd ./polling/terraform/deployments/prod/
+          terraform init -backend=false
+          terraform validate
+          cd $CWD
