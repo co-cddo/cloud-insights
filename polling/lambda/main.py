@@ -38,10 +38,10 @@ def lambda_handler(event, context):
         if "AccountId" in credentials:
 
             org_client = return_client("organizations", credentials)
-            current_account = getCurrentAccountDetails(
+            current_account = get_current_account_details(
                 org_client, credentials["AccountId"]
             )
-            org = getOrganisation(org_client)
+            org = get_organisation(org_client)
             orgs = get_child_organisations(org_client)
 
             iam_client = return_client("iam", credentials)
@@ -135,7 +135,7 @@ def return_client(service: str, credentials: dict):
     return client
 
 
-def getCurrentAccountDetails(client, accountId: str) -> dict:
+def get_current_account_details(client, accountId: str) -> dict:
     res = {}
     try:
         res = client.describe_account(AccountId=accountId)
@@ -176,7 +176,7 @@ def get_iam_password_policy(client) -> dict:
     return res
 
 
-def getOrganisation(client) -> dict:
+def get_organisation(client) -> dict:
     res = {}
     try:
         res = client.describe_organization()
