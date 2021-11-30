@@ -5,13 +5,13 @@ on:
     branches:
       - main
     paths:
-      - 'polling/*'
+      - 'polling/**'
 
   pull_request:
     branches:
       - '*'
     paths:
-      - 'polling/*'
+      - 'polling/**'
 
   workflow_dispatch:
 
@@ -24,18 +24,18 @@ jobs:
         environment: [build, live]
     environment:
       name: ${{ matrix.environment }}
-    
+
     if: (github.ref == 'refs/heads/main' && matrix.environment == 'live') || (matrix.environment == 'build')
     steps:
       - name: GitHub Reference
         run: |
           echo "github.ref: ${{ github.ref }}"
-      
+
       - name: Wait for build if this is live
         if: github.ref == 'refs/heads/main' && matrix.environment == 'live'
         run: |
           sleep 30s
-          
+
       - uses: actions/checkout@v2
 
       - name: Install PowerShell
