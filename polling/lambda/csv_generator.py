@@ -4,7 +4,7 @@ JOIN_CHAR = ","
 JOIN_REPL = "%2C"
 
 KEYS = {
-    "ORGANISATION_KEYS": [
+    "ORGANISATION": [
         "accountId",
         "organizationAccountEmail",
         "organizationAccountCount",
@@ -12,7 +12,7 @@ KEYS = {
         "organizationAccountAccessKeysPresent",
         "organizationAccountPasswordPolicy",
     ],
-    "ACCOUNT_DETAILS_KEYS": [
+    "ACCOUNT_DETAILS": [
         "accountId",
         "accountIsOrganization",
         "organizationAccountId",
@@ -25,7 +25,7 @@ KEYS = {
         "accountAccessKeysPresent",
         "passwordPolicy",
     ],
-    "ACCOUNT_COSTUSAGE_KEYS": [
+    "ACCOUNT_COSTUSAGE": [
         "accountId",
         "costsAndUsage-BlendedCost-day-amount",
         "costsAndUsage-BlendedCost-day-unit",
@@ -156,7 +156,7 @@ def object_to_lines(input_object: list, key_type: str) -> list:
 
     csvLines = [JOIN_CHAR.join(KEYS[key_type])]
 
-    if key_type == "ORGANISATION_KEYS":
+    if key_type == "ORGANISATION":
         for o in orgIds:
             line_item = initial_line_dict(o, key_type)
             for od in orgDetails[o]:
@@ -165,7 +165,7 @@ def object_to_lines(input_object: list, key_type: str) -> list:
             csvLines.append(dict_items_to_line(line_item))
             # print(dict_items_to_line(line_item))
 
-    if key_type in ["ACCOUNT_DETAILS_KEYS", "ACCOUNT_COSTUSAGE_KEYS"]:
+    if key_type in ["ACCOUNT_DETAILS", "ACCOUNT_COSTUSAGE"]:
         for a in accountIds:
             line_item = initial_line_dict(a, key_type)
             for ad in accountDetails[a]:
