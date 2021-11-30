@@ -9,14 +9,25 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        environment: [build, live]
+    environment:
+      name: ${{ matrix.environment }}
     steps:
-      - uses: actions/checkout@v2
-      
       - name: GitHub Reference
         run: |
           echo "github.ref: ${{ github.ref }}"
+      
+      - name: Wait for build if this is live
+        if: github.ref == 'refs/heads/main' && matrix.environment == 'live'
+        run: |
+          sleep 45s
+          
+      - uses: actions/checkout@v2
 
       - name: Install PowerShell
         run: |
@@ -49,13 +60,8 @@ jobs:
           terraform validate
           cd $CWD
 
-  deploy:
-    runs-on: ubuntu-latest
-    environment: live
-    needs: build
-    if: github.ref == 'refs/heads/main'
-    steps:
       - name: Configure AWS credentials
+        if: github.ref == 'refs/heads/main' && matrix.environment == 'live'
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -63,6 +69,7 @@ jobs:
           aws-region: us-east-1
 
       - name: Terraform apply
+        if: github.ref == 'refs/heads/main' && matrix.environment == 'live'
         run: |
           CWD=$(pwd)
           cd ./polling/terraform/deployments/prod/
