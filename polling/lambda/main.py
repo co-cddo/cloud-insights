@@ -304,16 +304,29 @@ def get_rightsizing_recommendations(client):
                     "EstimatedMonthlySavingsTotal": 0,
                     "ModifyCount": 0,
                     "TerminateCount": 0,
+                    "CurrencyCode": "",
                 }
 
             byAccount[aid]["CountTotal"] += 1
 
-            if "TargetInstances" in rr["ModifyRecommendationDetail"]:
-                for ti in rr["ModifyRecommendationDetail"]["TargetInstances"]:
-                    if "EstimatedMonthlySavings" in ti:
-                        byAccount[aid]["EstimatedMonthlySavingsTotal"] += float(
-                            ti["EstimatedMonthlySavings"]
-                        )
+            if "ModifyRecommendationDetail" in rr:
+                if "TargetInstances" in rr["ModifyRecommendationDetail"]:
+                    for ti in rr["ModifyRecommendationDetail"]["TargetInstances"]:
+                        if "EstimatedMonthlySavings" in ti:
+                            byAccount[aid]["EstimatedMonthlySavingsTotal"] += float(
+                                ti["EstimatedMonthlySavings"]
+                            )
+                        if "CurrencyCode" in ti:
+                            byAccount[aid]["CurrencyCode"] = ti["CurrencyCode"]
+
+            if "TerminateRecommendationDetail" in rr:
+                if "EstimatedMonthlySavings" in rr["TerminateRecommendationDetail"]:
+                    byAccount[aid]["EstimatedMonthlySavingsTotal"] += float(
+                        rr["TerminateRecommendationDetail"]["EstimatedMonthlySavings"]
+                    )
+                    byAccount[aid]["CurrencyCode"] = rr[
+                        "TerminateRecommendationDetail"
+                    ]["CurrencyCode"]
 
             rrTypeCount = f'Count{rr["RightsizingType"]}'
             if rrTypeCount in byAccount[aid]:

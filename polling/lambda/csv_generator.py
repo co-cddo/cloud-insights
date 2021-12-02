@@ -13,6 +13,7 @@ KEYS = {
         "organizationAccountPasswordPolicy",
         "rightsizing-Summary-TotalRecommendationCount",
         "rightsizing-Summary-EstimatedTotalMonthlySavingsAmount",
+        "rightsizing-Summary-CurrencyCode",
         "alternateContact-BILLING",
         "alternateContact-SECURITY",
         "alternateContact-OPERATIONS",
@@ -52,6 +53,7 @@ KEYS = {
         "rightsizing-ModifyCount",
         "rightsizing-TerminateCount",
         "rightsizing-EstimatedMonthlySavingsTotal",
+        "rightsizing-CurrencyCode",
     ],
 }
 
@@ -142,12 +144,18 @@ def object_to_lines(input_object: list, key_type: str) -> list:
                         and "Summary" in i["rightsizing-recommendations"]
                     ):
                         irsrs = i["rightsizing-recommendations"]["Summary"]
+
                         orgDetails[o][
                             "rightsizing-Summary-TotalRecommendationCount"
                         ] = irsrs["TotalRecommendationCount"]
+
                         orgDetails[o][
                             "rightsizing-Summary-EstimatedTotalMonthlySavingsAmount"
                         ] = irsrs["EstimatedTotalMonthlySavingsAmount"]
+
+                        orgDetails[o]["rightsizing-Summary-CurrencyCode"] = irsrs[
+                            "SavingsCurrencyCode"
+                        ]
 
                 if type(i["childAccounts"]) == list:
                     orgDetails[o]["organizationAccountCount"] = len(i["childAccounts"])
@@ -206,6 +214,7 @@ def object_to_lines(input_object: list, key_type: str) -> list:
                     "rightsizing-EstimatedMonthlySavingsTotal": irrrba[
                         "EstimatedMonthlySavingsTotal"
                     ],
+                    "rightsizing-CurrencyCode": irrrba["CurrencyCode"],
                 }
                 if a not in accountDetails:
                     accountDetails[a] = rrr
