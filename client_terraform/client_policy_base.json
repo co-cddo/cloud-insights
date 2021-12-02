@@ -2,7 +2,7 @@
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "OrganizationAndAccountAccess",
+            "Sid": "OrganizationAndAccountReadOnlyAccess",
             "Effect": "Allow",
             "Action": [
                 "account:GetAlternateContact",
@@ -13,13 +13,12 @@
                 "organizations:DescribeOrganization",
                 "organizations:DescribeAccount",
                 "organizations:DescribeOrganizationalUnit",
-                "organizations:ListAWSServiceAccessForOrganization",
-                "organizations:EnableAWSServiceAccess"
+                "organizations:ListAWSServiceAccessForOrganization"
             ],
             "Resource": "*"
         },
         {
-            "Sid": "CostAndBillingAccess",
+            "Sid": "CostAndBillingReadOnlyAccess",
             "Effect": "Allow",
             "Action": [
                 "aws-portal:ViewPaymentMethods",
@@ -34,32 +33,12 @@
             "Resource": "*"
         },
         {
-            "Sid": "SetupS3StorageLensServiceLinkedRole",
-            "Effect": "Allow",
-            "Action": [
-                "iam:CreateServiceLinkedRole"
-            ],
-            "Resource": "arn:aws:iam::*:role/aws-service-role/storage-lens.s3.amazonaws.com/*",
-            "Condition": {"StringLike": {"iam:AWSServiceName": "storage-lens.s3.amazonaws.com"}}
-        },
-        {
-            "Sid": "SetupS3StorageLensServiceRole",
-            "Effect": "Allow",
-            "Action": [
-                "iam:AttachRolePolicy",
-                "iam:PutRolePolicy"
-            ],
-            "Resource": "arn:aws:iam::*:role/aws-service-role/storage-lens.s3.amazonaws.com/*"
-        },
-        {
-            "Sid": "S3StorageLens",
+            "Sid": "S3StorageLensReadOnly",
             "Effect": "Allow",
             "Action": [
                 "s3:ListStorageLensConfigurations",
                 "s3:GetStorageLensConfiguration",
-                "s3:GetStorageLensConfigurationTagging",
-                "s3:PutStorageLensConfigurationTagging",
-                "s3:PutStorageLensConfiguration"
+                "s3:GetStorageLensConfigurationTagging"
             ],
             "Resource": "*"
         }
