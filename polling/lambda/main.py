@@ -328,7 +328,7 @@ def get_rightsizing_recommendations(client):
                         "TerminateRecommendationDetail"
                     ]["CurrencyCode"]
 
-            rrTypeCount = f'Count{rr["RightsizingType"]}'
+            rrTypeCount = f'{rr["RightsizingType"]}Count'
             if rrTypeCount in byAccount[aid]:
                 byAccount[aid][rrTypeCount] += 1
             else:

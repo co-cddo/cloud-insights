@@ -17,6 +17,11 @@ KEYS = {
         "alternateContact-BILLING",
         "alternateContact-SECURITY",
         "alternateContact-OPERATIONS",
+        "costsAndUsage-total-current-month",
+        "costsAndUsage-total-day",
+        "costsAndUsage-total-last-month",
+        "costsAndUsage-total-last-year",
+        "costsAndUsage-total-unit",
     ],
     "ACCOUNT_DETAILS": [
         "accountId",
@@ -91,6 +96,8 @@ def object_to_lines(input_object: list, key_type: str) -> list:
 
     for i in input_object:
         thisAccountId = i["accountId"]
+
+        o = None
 
         if thisAccountId not in accountIds:
             accountIds.append(i["accountId"])
@@ -192,14 +199,36 @@ def object_to_lines(input_object: list, key_type: str) -> list:
                                     orgDetails[o].update(ac_res)
                                 accountDetails[caId].update(ac_res)
 
+        spendTotals = {
+            "costsAndUsage-total-current-month": 0,
+            "costsAndUsage-total-day": 0,
+            "costsAndUsage-total-last-month": 0,
+            "costsAndUsage-total-last-year": 0,
+            "costsAndUsage-total-unit": "",
+        }
+
         for x in ["current-month", "day", "last-month", "last-year"]:
             cau = f"costsAndUsage-{x}"
             if cau in i:
                 for a in i[cau]:
+                    amount = f"costsAndUsage-BlendedCost-{x}-amount"
+                    unit = f"costsAndUsage-BlendedCost-{x}-unit"
+
+                    if spendTotals["costsAndUsage-total-unit"] == "":
+                        spendTotals["costsAndUsage-total-unit"] = unit
+
+                    if amount in i[cau][a] and (
+                        unit == spendTotals["costsAndUsage-total-unit"]
+                    ):
+                        spendTotals[f"costsAndUsage-total-{x}"] += i[cau][a][amount]
+
                     if a not in accountDetails:
                         accountDetails[a] = i[cau][a]
                     else:
                         accountDetails[a].update(i[cau][a])
+
+        if o and o in orgDetails:
+            orgDetails[o].update(spendTotals)
 
         if (
             "rightsizing-recommendations" in i
@@ -207,14 +236,15 @@ def object_to_lines(input_object: list, key_type: str) -> list:
         ):
             irrrba = i["rightsizing-recommendations"]["ByAccount"]
             for a in irrrba:
+                irsrbaa = irrrba[a]
                 rrr = {
-                    "rightsizing-CountTotal": irrrba["CountTotal"],
-                    "rightsizing-ModifyCount": irrrba["ModifyCount"],
-                    "rightsizing-TerminateCount": irrrba["TerminateCount"],
-                    "rightsizing-EstimatedMonthlySavingsTotal": irrrba[
+                    "rightsizing-CountTotal": irsrbaa["CountTotal"],
+                    "rightsizing-ModifyCount": irsrbaa["ModifyCount"],
+                    "rightsizing-TerminateCount": irsrbaa["TerminateCount"],
+                    "rightsizing-EstimatedMonthlySavingsTotal": irsrbaa[
                         "EstimatedMonthlySavingsTotal"
                     ],
-                    "rightsizing-CurrencyCode": irrrba["CurrencyCode"],
+                    "rightsizing-CurrencyCode": irsrbaa["CurrencyCode"],
                 }
                 if a not in accountDetails:
                     accountDetails[a] = rrr

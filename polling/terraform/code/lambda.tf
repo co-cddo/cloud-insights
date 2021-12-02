@@ -23,7 +23,8 @@ resource "aws_lambda_function" "lambda" {
   environment {
     variables = {
       PRIVATE_BUCKET = local.bucket_private,
-      HASH = var.source_code_hash
+      HASH = var.source_code_hash,
+      DEBUG = 1
     }
   }
 
