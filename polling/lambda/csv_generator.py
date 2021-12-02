@@ -11,6 +11,11 @@ KEYS = {
         "organizationAccountMFAEnabled",
         "organizationAccountAccessKeysPresent",
         "organizationAccountPasswordPolicy",
+        "rightsizing-Summary-TotalRecommendationCount",
+        "rightsizing-Summary-EstimatedTotalMonthlySavingsAmount",
+        "alternateContact-BILLING",
+        "alternateContact-SECURITY",
+        "alternateContact-OPERATIONS",
     ],
     "ACCOUNT_DETAILS": [
         "accountId",
@@ -24,6 +29,9 @@ KEYS = {
         "accountMFAEnabled",
         "accountAccessKeysPresent",
         "passwordPolicy",
+        "alternateContact-BILLING",
+        "alternateContact-SECURITY",
+        "alternateContact-OPERATIONS",
     ],
     "ACCOUNT_COSTUSAGE": [
         "accountId",
@@ -40,6 +48,10 @@ KEYS = {
         "costsAndUsage-BlendedCost-last-year-amount",
         "costsAndUsage-BlendedCost-last-year-unit",
         "costsAndUsage-BlendedCost-last-year-range",
+        "rightsizing-CountTotal",
+        "rightsizing-ModifyCount",
+        "rightsizing-TerminateCount",
+        "rightsizing-EstimatedMonthlySavingsTotal",
     ],
 }
 
@@ -125,6 +137,18 @@ def object_to_lines(input_object: list, key_type: str) -> list:
                             "organizationAccountPasswordPolicy"
                         ] = simply_json_to_string(i["passwordPolicy"])
 
+                    if (
+                        "rightsizing-recommendations" in i
+                        and "Summary" in i["rightsizing-recommendations"]
+                    ):
+                        irsrs = i["rightsizing-recommendations"]["Summary"]
+                        orgDetails[o][
+                            "rightsizing-Summary-TotalRecommendationCount"
+                        ] = irsrs["TotalRecommendationCount"]
+                        orgDetails[o][
+                            "rightsizing-Summary-EstimatedTotalMonthlySavingsAmount"
+                        ] = irsrs["EstimatedTotalMonthlySavingsAmount"]
+
                 if type(i["childAccounts"]) == list:
                     orgDetails[o]["organizationAccountCount"] = len(i["childAccounts"])
 
@@ -149,6 +173,17 @@ def object_to_lines(input_object: list, key_type: str) -> list:
                             }
                         )
 
+                        for ac in ["BILLING", "SECURITY", "OPERATIONS"]:
+                            if f"AlternateContact-{ac}" in ca:
+                                ac_res = {
+                                    f"alternateContact-{ac}": simply_json_to_string(
+                                        ca[f"AlternateContact-{ac}"]
+                                    ),
+                                }
+                                if caId == o:
+                                    orgDetails[o].update(ac_res)
+                                accountDetails[caId].update(ac_res)
+
         for x in ["current-month", "day", "last-month", "last-year"]:
             cau = f"costsAndUsage-{x}"
             if cau in i:
@@ -157,6 +192,25 @@ def object_to_lines(input_object: list, key_type: str) -> list:
                         accountDetails[a] = i[cau][a]
                     else:
                         accountDetails[a].update(i[cau][a])
+
+        if (
+            "rightsizing-recommendations" in i
+            and "ByAccount" in i["rightsizing-recommendations"]
+        ):
+            irrrba = i["rightsizing-recommendations"]["ByAccount"]
+            for a in irrrba:
+                rrr = {
+                    "rightsizing-CountTotal": irrrba["CountTotal"],
+                    "rightsizing-ModifyCount": irrrba["ModifyCount"],
+                    "rightsizing-TerminateCount": irrrba["TerminateCount"],
+                    "rightsizing-EstimatedMonthlySavingsTotal": irrrba[
+                        "EstimatedMonthlySavingsTotal"
+                    ],
+                }
+                if a not in accountDetails:
+                    accountDetails[a] = rrr
+                else:
+                    accountDetails[a].update(rrr)
 
     csvLines = [JOIN_CHAR.join(KEYS[key_type])]
 

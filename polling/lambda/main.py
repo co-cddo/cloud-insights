@@ -38,11 +38,13 @@ def lambda_handler(event, context):
         if "AccountId" in credentials:
 
             org_client = return_client("organizations", credentials)
+            acc_client = return_client("account", credentials)
+
             current_account = get_current_account_details(
                 org_client, credentials["AccountId"]
             )
             org = get_organisation(org_client)
-            orgs = get_child_organisations(org_client)
+            orgs = get_child_organisations(org_client, acc_client)
 
             iam_client = return_client("iam", credentials)
             account_summary = get_iam_summary(iam_client)
@@ -158,6 +160,21 @@ def get_current_account_details(client, accountId: str) -> dict:
     return res
 
 
+def get_alternative_contacts(client, accountId: str) -> dict:
+    res = {}
+    try:
+        res = client.GetAlternateContact(AccountId=accountId)
+        if "Account" in res:
+            return res["Account"]
+    except client.exceptions.AWSOrganizationsNotInUseException as e:
+        res = {"reason": "not-in-use"}
+    except client.exceptions.AccessDeniedException as e:
+        res = {"reason": "access-denied"}
+    except BaseException as e:
+        raise e
+    return res
+
+
 def get_iam_summary(client) -> dict:
     res = {}
     try:
@@ -199,7 +216,7 @@ def get_organisation(client) -> dict:
     return res
 
 
-def get_child_organisations(client) -> dict:
+def get_child_organisations(client, acc_client) -> dict:
     res = {"accounts": []}
     try:
         paginator = client.get_paginator("list_accounts")
@@ -219,7 +236,23 @@ def get_child_organisations(client) -> dict:
                         print(
                             f"get_child_organisations: could not get tags for {item['Id']}"
                         )
+                for ac in ["BILLING", "OPERATIONS", "SECURITY"]:
+                    try:
+                        ac_response = acc_client.get_alternate_contact(
+                            AlternateContactType=ac, AccountId=item["Id"]
+                        )
+                        if ac_response and "AlternateContact" in ac_response:
+                            item[f"AlternateContact-{ac}"] = ac_response[
+                                "AlternateContact"
+                            ]
+                    except Exception as e:
+                        if DEBUG:
+                            print(
+                                f"get_child_organisations: could not get {ac} alternate contact {item['Id']}"
+                            )
+
                 res["accounts"].append(item)
+
     except client.exceptions.AWSOrganizationsNotInUseException as e:
         res.update({"reason": "organizations-not-in-use"})
     except client.exceptions.AccessDeniedException as e:
@@ -237,14 +270,58 @@ def get_rightsizing_recommendations(client):
             "Summary": response["Summary"],
             "RightsizingRecommendations": response["RightsizingRecommendations"],
         }
+        if "TotalRecommendationCount" in response["Summary"]:
+            response["Summary"]["TotalRecommendationCount"] = int(
+                res["Summary"]["TotalRecommendationCount"]
+            )
+        if "EstimatedTotalMonthlySavingsAmount" in response["Summary"]:
+            response["Summary"]["EstimatedTotalMonthlySavingsAmount"] = float(
+                res["Summary"]["EstimatedTotalMonthlySavingsAmount"]
+            )
 
         while "NextPageToken" in response and response["NextPageToken"]:
             response = client.get_rightsizing_recommendation(
                 Service="AmazonEC2", NextPageToken=response["NextPageToken"]
             )
+            if "TotalRecommendationCount" in response["Summary"]:
+                response["Summary"]["TotalRecommendationCount"] += int(
+                    res["Summary"]["TotalRecommendationCount"]
+                )
+            if "EstimatedTotalMonthlySavingsAmount" in response["Summary"]:
+                response["Summary"]["EstimatedTotalMonthlySavingsAmount"] += float(
+                    res["Summary"]["EstimatedTotalMonthlySavingsAmount"]
+                )
             res["RightsizingRecommendations"].extend(
                 response["RightsizingRecommendations"]
             )
+
+        byAccount = {}
+        for rr in res["RightsizingRecommendations"]:
+            aid = rr["AccountId"]
+            if aid not in byAccount:
+                byAccount[aid] = {
+                    "CountTotal": 0,
+                    "EstimatedMonthlySavingsTotal": 0,
+                    "ModifyCount": 0,
+                    "TerminateCount": 0,
+                }
+
+            byAccount[aid]["CountTotal"] += 1
+
+            if "TargetInstances" in rr["ModifyRecommendationDetail"]:
+                for ti in rr["ModifyRecommendationDetail"]["TargetInstances"]:
+                    if "EstimatedMonthlySavings" in ti:
+                        byAccount[aid]["EstimatedMonthlySavingsTotal"] += float(
+                            ti["EstimatedMonthlySavings"]
+                        )
+
+            rrTypeCount = f'Count{rr["RightsizingType"]}'
+            if rrTypeCount in byAccount[aid]:
+                byAccount[aid][rrTypeCount] += 1
+            else:
+                byAccount[aid][rrTypeCount] = 1
+
+        res["ByAccount"] = byAccount
 
     except botocore.exceptions.ClientError as e:
         res.update({"reason": "access-denied"})
