@@ -152,7 +152,10 @@ def object_to_lines(input_object: list, key_type: str) -> list:
             cau = f"costsAndUsage-{x}"
             if cau in i:
                 for a in i[cau]:
-                    accountDetails[a].update(i[cau][a])
+                    if a not in accountDetails:
+                        accountDetails[a] = i[cau][a]
+                    else:
+                        accountDetails[a].update(i[cau][a])
 
     csvLines = [JOIN_CHAR.join(KEYS[key_type])]
 
