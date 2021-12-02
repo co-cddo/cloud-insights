@@ -14,9 +14,6 @@ resource "aws_lambda_function" "lambda" {
 
   filename         = "${path.module}/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/lambda.zip")
-  lifecycle {
-    ignore_changes = [source_code_hash]
-  }
 
   role = aws_iam_role.cloud-insights-lambda-role.arn
 
