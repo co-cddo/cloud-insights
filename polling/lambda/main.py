@@ -284,11 +284,11 @@ def get_rightsizing_recommendations(client):
                 Service="AmazonEC2", NextPageToken=response["NextPageToken"]
             )
             if "TotalRecommendationCount" in response["Summary"]:
-                response["Summary"]["TotalRecommendationCount"] += int(
+                res["Summary"]["TotalRecommendationCount"] += int(
                     res["Summary"]["TotalRecommendationCount"]
                 )
             if "EstimatedTotalMonthlySavingsAmount" in response["Summary"]:
-                response["Summary"]["EstimatedTotalMonthlySavingsAmount"] += float(
+                res["Summary"]["EstimatedTotalMonthlySavingsAmount"] += float(
                     res["Summary"]["EstimatedTotalMonthlySavingsAmount"]
                 )
             res["RightsizingRecommendations"].extend(
