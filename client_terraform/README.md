@@ -8,7 +8,7 @@ Module will also be available from S3.
 
 ``` tf
 module "co-cddo-cloud-insights-access" {
-  source = "github.com/co-cddo/cloud-insights//client_terraform?ref=16c79e4d9e9e5183ce1692281990ac02ea7348be"
+  source = "github.com/co-cddo/cloud-insights//client_terraform?ref=fded14d86d1fa970959cc51744d5a7dfc0e760eb"
   enable_s3_storage_lens = false # default
 }
 
