@@ -27,6 +27,7 @@ KEYS = {
     ],
     "ACCOUNT_COSTUSAGE": [
         "accountId",
+        "accountName",
         "costsAndUsage-BlendedCost-day-amount",
         "costsAndUsage-BlendedCost-day-unit",
         "costsAndUsage-BlendedCost-day-range",

@@ -77,7 +77,13 @@ def lambda_handler(event, context):
 
         accountResults.append(accountResult)
 
-    print(json.dumps(accountResults, default=str))
+    # print(json.dumps(accountResults, default=str))
+    save_file_to_s3(
+        json.dumps(accountResults, default=str, indent=2),
+        "ACCOUNTRESULTS_JSON",
+        pollingAccountId,
+        "json",
+    )
 
     for x in ["ORGANISATION", "ACCOUNT_DETAILS", "ACCOUNT_COSTUSAGE"]:
         save_file_to_s3(object_to_lines(accountResults, x), x, pollingAccountId)
@@ -91,14 +97,16 @@ def get_accounts_from_s3() -> dict:
     return json.loads(obj["Body"].read())
 
 
-def save_file_to_s3(contents: str, key_type: str, pollingAccountId: str):
+def save_file_to_s3(
+    contents: str, key_type: str, pollingAccountId: str, extension: str = "csv"
+):
     client = boto3.client("s3")
 
     now = datetime.now()
     year = now.strftime("%Y")
     month = now.strftime("%m")
     day = now.strftime("%d")
-    key = f"lambda-results/{year}/{month}/{day}/{key_type}-{pollingAccountId}-{int(time())}.csv"
+    key = f"lambda-results/{year}/{month}/{day}/{key_type}-{pollingAccountId}-{int(time())}.{extension}"
 
     client.put_object(
         Body=contents.encode("utf-8"),
