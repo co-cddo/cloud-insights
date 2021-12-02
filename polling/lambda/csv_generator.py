@@ -214,13 +214,15 @@ def object_to_lines(input_object: list, key_type: str) -> list:
                     amount = f"costsAndUsage-BlendedCost-{x}-amount"
                     unit = f"costsAndUsage-BlendedCost-{x}-unit"
 
-                    if spendTotals["costsAndUsage-total-unit"] == "":
-                        spendTotals["costsAndUsage-total-unit"] = unit
+                    if unit in i[cau][a]:
 
-                    if amount in i[cau][a] and (
-                        unit == spendTotals["costsAndUsage-total-unit"]
-                    ):
-                        spendTotals[f"costsAndUsage-total-{x}"] += i[cau][a][amount]
+                        if spendTotals["costsAndUsage-total-unit"] == "":
+                            spendTotals["costsAndUsage-total-unit"] = i[cau][a][unit]
+
+                        if amount in i[cau][a] and (
+                            i[cau][a][unit] == spendTotals["costsAndUsage-total-unit"]
+                        ):
+                            spendTotals[f"costsAndUsage-total-{x}"] += i[cau][a][amount]
 
                     if a not in accountDetails:
                         accountDetails[a] = i[cau][a]

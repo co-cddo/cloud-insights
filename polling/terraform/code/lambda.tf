@@ -24,7 +24,7 @@ resource "aws_lambda_function" "lambda" {
     variables = {
       PRIVATE_BUCKET = local.bucket_private,
       HASH = var.source_code_hash,
-      DEBUG = 1
+      DEBUG = 0
     }
   }
 

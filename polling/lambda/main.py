@@ -234,7 +234,7 @@ def get_child_organisations(client, acc_client) -> dict:
                 except Exception as e:
                     if DEBUG:
                         print(
-                            f"get_child_organisations: could not get tags for {item['Id']}"
+                            f"get_child_organisations: could not get tags for {item['Id']}: {e}"
                         )
                 for ac in ["BILLING", "OPERATIONS", "SECURITY"]:
                     try:
@@ -248,7 +248,7 @@ def get_child_organisations(client, acc_client) -> dict:
                     except Exception as e:
                         if DEBUG:
                             print(
-                                f"get_child_organisations: could not get {ac} alternate contact {item['Id']}"
+                                f"get_child_organisations: could not get {ac} alternate contact {item['Id']}: {e}"
                             )
 
                 res["accounts"].append(item)
